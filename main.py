@@ -141,7 +141,77 @@ st.info(
 
 st.divider()
 
-st.header("📌 구역 3. 추가 시간 분석 그래프 (확장용 구역)")
+st.header("📌 구역 3. 날짜별 박스오피스 Top 10 일관객 합계 (영역 그래프)")
+st.caption("매일 10위권 영화들의 일관객수 합계를 영역 그래프로 시각화하고, 관객 수가 가장 많았던 상위 3개 날짜를 그래프 위에 주석으로 강조합니다.")
+
+# 날짜별 Top 10 일관객 합계 계산
+daily_sum = df.groupby('날짜')['일관객'].sum().reset_index()
+
+fig3 = px.area(
+    daily_sum,
+    x='날짜',
+    y='일관객',
+    title="<b>일별 박스오피스 Top 10 관객수 합계 추이</b>",
+    labels={'날짜': '날짜', '일관객': '총 일관객수(명)'}
+)
+
+fig3.update_traces(
+    line_color='#E50914',
+    fillcolor='rgba(229, 9, 20, 0.25)',
+    hovertemplate="<b>날짜:</b> %{x|%Y-%m-%d}<br><b>총 관객수:</b> %{y:,}명<extra></extra>"
+)
+
+# 일관객 합계가 가장 컸던 상위 3개 날짜 추출 및 그래프 상 표기
+top3_days = daily_sum.nlargest(3, '일관객').reset_index(drop=True)
+
+for i, row in top3_days.iterrows():
+    rank = i + 1
+    date_str = row['날짜'].strftime('%Y-%m-%d')
+    aud_count = row['일관객']
+    
+    # 그래프 내 주석(Annotation) 배치
+    fig3.add_annotation(
+        x=row['날짜'],
+        y=aud_count,
+        text=f"<b>🏆 {rank}위: {date_str}</b><br>({aud_count:,}명)",
+        showarrow=True,
+        arrowhead=2,
+        arrowsize=1,
+        arrowwidth=1.5,
+        arrowcolor='#E50914',
+        ax=0,
+        ay=-45 - (i * 12),
+        bgcolor="white",
+        bordercolor='#E50914',
+        borderwidth=1,
+        borderpad=4,
+        font=dict(size=11, color='#141414')
+    )
+
+fig3.update_layout(
+    xaxis=dict(showgrid=True, gridcolor='#E5E5E5'),
+    yaxis=dict(showgrid=True, gridcolor='#E5E5E5', tickformat=','),
+    hovermode="x unified",
+    template="plotly_white",
+    margin=dict(l=40, r=40, t=60, b=40)
+)
+
+st.plotly_chart(fig3, use_container_width=True)
+
+# Top 3 날짜안내 문구 구성
+top3_text_list = [
+    f"**{row['날짜'].strftime('%Y-%m-%d')}** ({row['일관객']:,}명)"
+    for _, row in top3_days.iterrows()
+]
+top3_str = ", ".join(top3_text_list)
+
+st.info(
+    f"💡 **이 그래프로 알 수 있는 것:** 전체 극장가(Top 10 영화 기준)의 날짜별 관객수 총합 흐름을 영역 그래프로 한눈에 볼 수 있습니다. 이 기간 중 일일 총 관객 수가 가장 많았던 날 Top 3는 순서대로 {top3_str} 입니다."
+)
+
+st.divider()
+
+st.header("📌 구역 4. 추가 시간 분석 그래프 (확장용 구역)")
 st.caption("추후 요일별/월별 관객수 변화 등 새로운 시간 분석 그래프를 지속적으로 추가할 수 있는 영역입니다.")
 
 with st.expander("🔍 원본 데이터 미리보기 (Data Viewer)"):
